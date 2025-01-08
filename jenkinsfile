@@ -17,21 +17,6 @@ pipeline {
             }
         }
 
-        stage('Nix Development Shell') {
-            steps {
-                script {
-                    sh '''
-                        # Ensure Nix is installed
-                        curl -L https://nixos.org/nix/install | sh
-                        . $HOME/.nix-profile/etc/profile.d/nix.sh
-
-                        # Enter dev shell and build
-                        nix develop --command zig build
-                    '''
-                }
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
                 script {
