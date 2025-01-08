@@ -1,0 +1,53 @@
+pipeline {
+    agent any
+
+    triggers {
+        pollSCM('* * * * *')
+    }
+
+    environment {
+        NIX_REMOTE = 'daemon'
+        NIX_PATH = '/nix/var/nix/profiles/per-user/root/channels'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Nix Development Shell') {
+            steps {
+                script {
+                    sh '''
+                        # Ensure Nix is installed
+                        curl -L https://nixos.org/nix/install | sh
+                        . $HOME/.nix-profile/etc/profile.d/nix.sh
+
+                        # Enter dev shell and build
+                        nix develop --command zig build
+                    '''
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build("hello-world-zig:${env.BUILD_NUMBER}")
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                script {
+                    docker.image("hello-world-zig:${env.BUILD_NUMBER}").inside {
+                        sh '/app/zig-out/bin/hello'
+                    }
+                }
+            }
+        }
+    }
+}
