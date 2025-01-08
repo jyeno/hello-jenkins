@@ -6,6 +6,7 @@ pipeline {
     }
 
     environment {
+        PATH="/run/current-system/sw/bin"
         registryName = "ifba/hello-world-zig"
         app = ''
     }
@@ -28,9 +29,7 @@ pipeline {
         stage('Run') {
             steps {
                 script {
-                    app.inside {
-                        sh '/app/hello'
-                    }
+                    sh 'docker run $registryName:$BUILD_NUMBER'
                 }
             }
         }
