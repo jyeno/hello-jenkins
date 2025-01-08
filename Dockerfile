@@ -1,13 +1,23 @@
-FROM nixos/nix:latest
+# Dockerfile
+FROM alpine:latest AS builder
 
-# Copy Nix configuration files
-COPY flake.nix flake.lock ./
+# Install Zig
+RUN apk add --no-cache wget xz \
+    && wget -O zig.tar.xz https://ziglang.org/download/0.13.0/zig-linux-x86_64-0.13.0.tar.xz \
+    && tar -xf zig.tar.xz \
+    && mv zig-linux-x86_64-0.13.0 /usr/local/zig \
+    && rm zig.tar.xz
 
-# Enter development shell and build
-RUN nix develop --command zig version
+# Add Zig to PATH
+ENV PATH="/usr/local/zig:${PATH}"
 
-WORKDIR /app
+# Build stage
+WORKDIR /build
 COPY . .
-RUN nix develop --command zig build
+RUN zig build -Doptimize=ReleaseSafe
 
-CMD ["/app/zig-out/bin/hello"]
+# Create minimal runtime image
+FROM alpine:latest
+RUN ls
+COPY --from=builder /build/zig-out/bin/jenkins-topicosweb2 /app/hello
+CMD ["/app/hello"]

@@ -40,17 +40,12 @@ pipeline {
             }
         }
 
-        stage('Test') {
+        stage('Run') {
             steps {
                 script {
-                    sh '''
-                        # Ensure Nix is installed
-                        curl -L https://nixos.org/nix/install | sh
-                        . $HOME/.nix-profile/etc/profile.d/nix.sh
-
-                        # Enter dev shell and build
-                        nix develop --command zig build test
-                    '''
+                    docker.image("hello-world-zig:${env.BUILD_NUMBER}").inside {
+                        sh '/app/hello'
+                    }
                 }
             }
         }
